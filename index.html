@@ -3,15 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>AI Генератор изображений</title>
+    <title>AI Image Generator</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
             background: var(--tg-theme-bg-color, #ffffff);
@@ -19,12 +14,7 @@
             padding: 20px;
             min-height: 100vh;
         }
-        
-        .container {
-            max-width: 600px;
-            margin: 0 auto;
-        }
-        
+        .container { max-width: 600px; margin: 0 auto; }
         .header {
             text-align: center;
             margin-bottom: 30px;
@@ -33,17 +23,7 @@
             border-radius: 20px;
             color: white;
         }
-        
-        .header h1 {
-            font-size: 28px;
-            margin-bottom: 8px;
-        }
-        
-        .header p {
-            font-size: 14px;
-            opacity: 0.9;
-        }
-        
+        .header h1 { font-size: 28px; margin-bottom: 8px; }
         .prompt-input {
             width: 100%;
             padding: 15px;
@@ -54,67 +34,25 @@
             font-size: 16px;
             resize: vertical;
             margin-bottom: 20px;
-            font-family: inherit;
         }
-        
-        .prompt-input:focus {
-            outline: none;
-            border-color: var(--tg-theme-button-color, #667eea);
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-        }
-        
-        .settings {
-            background: var(--tg-theme-secondary-bg-color, #f5f5f5);
-            border-radius: 12px;
-            padding: 15px;
-            margin-bottom: 20px;
-        }
-        
-        .setting-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 12px;
-            padding: 8px;
-        }
-        
-        .setting-row label {
-            font-size: 14px;
-            font-weight: 500;
-        }
-        
-        .setting-row select, .setting-row input {
-            padding: 8px 12px;
-            border-radius: 8px;
-            border: 1px solid var(--tg-theme-hint-color, #cccccc);
-            background: var(--tg-theme-bg-color, #ffffff);
-            color: var(--tg-theme-text-color, #000000);
-        }
-        
         .examples {
             display: flex;
             flex-wrap: wrap;
             gap: 8px;
             margin-bottom: 20px;
         }
-        
         .example-btn {
             padding: 8px 16px;
             background: var(--tg-theme-secondary-bg-color, #f0f0f0);
             border: none;
             border-radius: 20px;
-            color: var(--tg-theme-text-color, #000000);
-            font-size: 14px;
             cursor: pointer;
             transition: all 0.2s;
         }
-        
         .example-btn:hover {
             background: var(--tg-theme-button-color, #667eea);
             color: white;
-            transform: translateY(-2px);
         }
-        
         .generate-btn {
             width: 100%;
             padding: 16px;
@@ -125,43 +63,19 @@
             font-size: 16px;
             font-weight: 600;
             cursor: pointer;
-            transition: all 0.3s;
             margin-bottom: 20px;
         }
-        
-        .generate-btn:active {
-            transform: scale(0.98);
-        }
-        
         .generate-btn:disabled {
             opacity: 0.6;
             cursor: not-allowed;
         }
-        
-        .result {
-            margin-top: 20px;
-            display: none;
-        }
-        
-        .result img {
-            width: 100%;
-            border-radius: 12px;
-            margin-bottom: 10px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        }
-        
-        .result-info {
-            font-size: 14px;
-            color: var(--tg-theme-hint-color, #666666);
-            text-align: center;
-        }
-        
+        .result { display: none; margin-top: 20px; }
+        .result img { width: 100%; border-radius: 12px; margin-bottom: 10px; }
         .loading {
             display: none;
             text-align: center;
             padding: 40px;
         }
-        
         .spinner {
             width: 50px;
             height: 50px;
@@ -171,94 +85,38 @@
             animation: spin 1s linear infinite;
             margin: 0 auto 20px;
         }
-        
         @keyframes spin {
             to { transform: rotate(360deg); }
-        }
-        
-        .back-btn {
-            width: 100%;
-            padding: 12px;
-            background: transparent;
-            border: 1px solid var(--tg-theme-button-color, #667eea);
-            border-radius: 12px;
-            color: var(--tg-theme-button-color, #667eea);
-            font-size: 14px;
-            cursor: pointer;
-            margin-top: 10px;
-        }
-        
-        .info-text {
-            font-size: 12px;
-            color: var(--tg-theme-hint-color, #999);
-            text-align: center;
-            margin-top: 20px;
         }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>🎨 AI Генератор</h1>
-            <p>Создавайте уникальные изображения с помощью нейросети</p>
+            <h1>🎨 AI Image Generator</h1>
+            <p>Создавайте изображения с помощью нейросети</p>
         </div>
         
-        <textarea id="prompt" class="prompt-input" rows="3" placeholder="Опишите что вы хотите увидеть...&#10;&#10;Например: a beautiful sunset over the ocean, realistic style, high quality"></textarea>
+        <textarea id="prompt" class="prompt-input" rows="3" placeholder="Опишите что вы хотите увидеть на английском...&#10;&#10;Example: a cute dog in a park, realistic style"></textarea>
         
         <div class="examples">
-            <button class="example-btn" data-prompt="a cute dog playing in a sunny park, realistic">🐕 Собака в парке</button>
-            <button class="example-btn" data-prompt="a cat wearing a space suit in outer space, stars">🐱 Кот в космосе</button>
-            <button class="example-btn" data-prompt="beautiful sunset over tropical beach, palm trees">🌅 Закат на море</button>
-            <button class="example-btn" data-prompt="fantasy castle on a mountain, clouds, magical">🏰 Волшебный замок</button>
-            <button class="example-btn" data-prompt="futuristic cyberpunk city at night, neon lights">🌃 Киберпанк город</button>
-            <button class="example-btn" data-prompt="anime girl with cherry blossoms, detailed">🎨 Аниме девушка</button>
+            <button class="example-btn" data-prompt="a cute dog playing in a sunny park, realistic">🐕 Dog</button>
+            <button class="example-btn" data-prompt="a cat in space wearing a spacesuit, stars">🐱 Cat in space</button>
+            <button class="example-btn" data-prompt="beautiful sunset over tropical beach, palm trees">🌅 Sunset</button>
+            <button class="example-btn" data-prompt="cyberpunk city at night, neon lights">🌃 Cyberpunk</button>
         </div>
         
-        <div class="settings">
-            <div class="setting-row">
-                <label>🎨 Стиль</label>
-                <select id="style">
-                    <option value="realistic">Реалистичный</option>
-                    <option value="anime">Аниме</option>
-                    <option value="oil painting">Масляная живопись</option>
-                    <option value="watercolor">Акварель</option>
-                    <option value="cyberpunk">Киберпанк</option>
-                    <option value="fantasy">Фэнтези</option>
-                </select>
-            </div>
-            <div class="setting-row">
-                <label>📐 Размер</label>
-                <select id="resolution">
-                    <option value="512">512x512 (Быстро)</option>
-                    <option value="768">768x768 (Высокое качество)</option>
-                </select>
-            </div>
-            <div class="setting-row">
-                <label>⚡ Качество</label>
-                <select id="quality">
-                    <option value="20">Быстро (20 шагов)</option>
-                    <option value="30" selected>Стандарт (30 шагов)</option>
-                    <option value="50">Высокое (50 шагов)</option>
-                </select>
-            </div>
-        </div>
-        
-        <button id="generateBtn" class="generate-btn">🚀 Сгенерировать изображение</button>
+        <button id="generateBtn" class="generate-btn">🚀 Generate Image</button>
         
         <div id="loading" class="loading">
             <div class="spinner"></div>
-            <p>🎨 Генерация изображения...</p>
-            <p style="font-size: 12px;">Обычно это занимает 20-30 секунд</p>
+            <p>Generating image...</p>
+            <p style="font-size: 12px;">This takes 20-30 seconds</p>
         </div>
         
         <div id="result" class="result">
-            <img id="resultImage" alt="Сгенерированное изображение">
+            <img id="resultImage" alt="Generated image">
             <div id="resultInfo" class="result-info"></div>
-            <button id="backBtn" class="back-btn">◀ Закрыть</button>
-        </div>
-        
-        <div class="info-text">
-            💡 Совет: Чем подробнее описание, тем лучше результат!
         </div>
     </div>
     
@@ -267,15 +125,14 @@
         tg.ready();
         tg.expand();
         
+        const API_URL = 'https://mashed-reforest-boxcar.ngrok-free.dev';
+        
         const promptInput = document.getElementById('prompt');
         const generateBtn = document.getElementById('generateBtn');
         const loadingDiv = document.getElementById('loading');
         const resultDiv = document.getElementById('result');
         const resultImage = document.getElementById('resultImage');
         const resultInfo = document.getElementById('resultInfo');
-        const styleSelect = document.getElementById('style');
-        const resolutionSelect = document.getElementById('resolution');
-        const qualitySelect = document.getElementById('quality');
         
         document.querySelectorAll('.example-btn').forEach(btn => {
             btn.addEventListener('click', () => {
@@ -283,38 +140,24 @@
             });
         });
         
-        document.getElementById('backBtn').addEventListener('click', () => {
-            resultDiv.style.display = 'none';
-            generateBtn.disabled = false;
-            tg.MainButton.hide();
-        });
-        
         generateBtn.addEventListener('click', async () => {
-            let prompt = promptInput.value.trim();
+            const prompt = promptInput.value.trim();
             if (!prompt) {
-                tg.showAlert('Пожалуйста, введите описание изображения');
+                tg.showAlert('Please enter a prompt');
                 return;
             }
             
-            const style = styleSelect.value;
-            const fullPrompt = `${prompt}, ${style} style, high quality, detailed`;
-            
             generateBtn.disabled = true;
             loadingDiv.style.display = 'block';
+            resultDiv.style.display = 'none';
             
             try {
-                const response = await fetch('/generate', {
+                const response = await fetch(API_URL + '/generate', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        prompt: fullPrompt,
-                        settings: {
-                            resolution: parseInt(resolutionSelect.value),
-                            steps: parseInt(qualitySelect.value)
-                        },
-                        user_id: tg.initDataUnsafe?.user?.id
+                        prompt: prompt,
+                        user_id: tg.initDataUnsafe?.user?.id || 'anonymous'
                     })
                 });
                 
@@ -322,13 +165,12 @@
                 
                 if (data.success) {
                     loadingDiv.style.display = 'none';
-                    resultImage.src = data.image_url;
-                    resultInfo.textContent = `✅ Готово за ${data.time} секунд`;
+                    resultImage.src = 'data:image/png;base64,' + data.image;
+                    resultInfo.textContent = `✅ Ready in ${data.time} seconds`;
                     resultDiv.style.display = 'block';
-                    
                     tg.showPopup({
-                        title: 'Готово!',
-                        message: 'Изображение успешно создано',
+                        title: 'Done!',
+                        message: 'Image generated successfully',
                         buttons: [{type: 'ok'}]
                     });
                 } else {
@@ -336,14 +178,10 @@
                 }
             } catch (error) {
                 loadingDiv.style.display = 'none';
+                tg.showAlert(`Error: ${error.message}`);
+            } finally {
                 generateBtn.disabled = false;
-                tg.showAlert(`Ошибка: ${error.message}`);
             }
-        });
-        
-        tg.MainButton.setText("Закрыть");
-        tg.MainButton.onClick(() => {
-            tg.close();
         });
     </script>
 </body>
