@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>AI Генератор изображений</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: var(--tg-theme-bg-color, #ffffff);
+            color: var(--tg-theme-text-color, #000000);
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 20px;
+            color: white;
+        }
+        
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 8px;
+        }
+        
+        .header p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+        
+        .prompt-input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid var(--tg-theme-button-color, #667eea);
+            border-radius: 12px;
+            background: var(--tg-theme-secondary-bg-color, #f7f7f7);
+            color: var(--tg-theme-text-color, #000000);
+            font-size: 16px;
+            resize: vertical;
+            margin-bottom: 20px;
+            font-family: inherit;
+        }
+        
+        .prompt-input:focus {
+            outline: none;
+            border-color: var(--tg-theme-button-color, #667eea);
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .settings {
+            background: var(--tg-theme-secondary-bg-color, #f5f5f5);
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .setting-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            padding: 8px;
+        }
+        
+        .setting-row label {
+            font-size: 14px;
+            font-weight: 500;
+        }
+        
+        .setting-row select, .setting-row input {
+            padding: 8px 12px;
+            border-radius: 8px;
+            border: 1px solid var(--tg-theme-hint-color, #cccccc);
+            background: var(--tg-theme-bg-color, #ffffff);
+            color: var(--tg-theme-text-color, #000000);
+        }
+        
+        .examples {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+        
+        .example-btn {
+            padding: 8px 16px;
+            background: var(--tg-theme-secondary-bg-color, #f0f0f0);
+            border: none;
+            border-radius: 20px;
+            color: var(--tg-theme-text-color, #000000);
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .example-btn:hover {
+            background: var(--tg-theme-button-color, #667eea);
+            color: white;
+            transform: translateY(-2px);
+        }
+        
+        .generate-btn {
+            width: 100%;
+            padding: 16px;
+            background: var(--tg-theme-button-color, #667eea);
+            color: var(--tg-theme-button-text-color, #ffffff);
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 20px;
+        }
+        
+        .generate-btn:active {
+            transform: scale(0.98);
+        }
+        
+        .generate-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        
+        .result {
+            margin-top: 20px;
+            display: none;
+        }
+        
+        .result img {
+            width: 100%;
+            border-radius: 12px;
+            margin-bottom: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        .result-info {
+            font-size: 14px;
+            color: var(--tg-theme-hint-color, #666666);
+            text-align: center;
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 40px;
+        }
+        
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid var(--tg-theme-secondary-bg-color, #f0f0f0);
+            border-top-color: var(--tg-theme-button-color, #667eea);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .back-btn {
+            width: 100%;
+            padding: 12px;
+            background: transparent;
+            border: 1px solid var(--tg-theme-button-color, #667eea);
+            border-radius: 12px;
+            color: var(--tg-theme-button-color, #667eea);
+            font-size: 14px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        
+        .info-text {
+            font-size: 12px;
+            color: var(--tg-theme-hint-color, #999);
+            text-align: center;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎨 AI Генератор</h1>
+            <p>Создавайте уникальные изображения с помощью нейросети</p>
+        </div>
+        
+        <textarea id="prompt" class="prompt-input" rows="3" placeholder="Опишите что вы хотите увидеть...&#10;&#10;Например: a beautiful sunset over the ocean, realistic style, high quality"></textarea>
+        
+        <div class="examples">
+            <button class="example-btn" data-prompt="a cute dog playing in a sunny park, realistic">🐕 Собака в парке</button>
+            <button class="example-btn" data-prompt="a cat wearing a space suit in outer space, stars">🐱 Кот в космосе</button>
+            <button class="example-btn" data-prompt="beautiful sunset over tropical beach, palm trees">🌅 Закат на море</button>
+            <button class="example-btn" data-prompt="fantasy castle on a mountain, clouds, magical">🏰 Волшебный замок</button>
+            <button class="example-btn" data-prompt="futuristic cyberpunk city at night, neon lights">🌃 Киберпанк город</button>
+            <button class="example-btn" data-prompt="anime girl with cherry blossoms, detailed">🎨 Аниме девушка</button>
+        </div>
+        
+        <div class="settings">
+            <div class="setting-row">
+                <label>🎨 Стиль</label>
+                <select id="style">
+                    <option value="realistic">Реалистичный</option>
+                    <option value="anime">Аниме</option>
+                    <option value="oil painting">Масляная живопись</option>
+                    <option value="watercolor">Акварель</option>
+                    <option value="cyberpunk">Киберпанк</option>
+                    <option value="fantasy">Фэнтези</option>
+                </select>
+            </div>
+            <div class="setting-row">
+                <label>📐 Размер</label>
+                <select id="resolution">
+                    <option value="512">512x512 (Быстро)</option>
+                    <option value="768">768x768 (Высокое качество)</option>
+                </select>
+            </div>
+            <div class="setting-row">
+                <label>⚡ Качество</label>
+                <select id="quality">
+                    <option value="20">Быстро (20 шагов)</option>
+                    <option value="30" selected>Стандарт (30 шагов)</option>
+                    <option value="50">Высокое (50 шагов)</option>
+                </select>
+            </div>
+        </div>
+        
+        <button id="generateBtn" class="generate-btn">🚀 Сгенерировать изображение</button>
+        
+        <div id="loading" class="loading">
+            <div class="spinner"></div>
+            <p>🎨 Генерация изображения...</p>
+            <p style="font-size: 12px;">Обычно это занимает 20-30 секунд</p>
+        </div>
+        
+        <div id="result" class="result">
+            <img id="resultImage" alt="Сгенерированное изображение">
+            <div id="resultInfo" class="result-info"></div>
+            <button id="backBtn" class="back-btn">◀ Закрыть</button>
+        </div>
+        
+        <div class="info-text">
+            💡 Совет: Чем подробнее описание, тем лучше результат!
+        </div>
+    </div>
+    
+    <script>
+        const tg = window.Telegram.WebApp;
+        tg.ready();
+        tg.expand();
+        
+        const promptInput = document.getElementById('prompt');
+        const generateBtn = document.getElementById('generateBtn');
+        const loadingDiv = document.getElementById('loading');
+        const resultDiv = document.getElementById('result');
+        const resultImage = document.getElementById('resultImage');
+        const resultInfo = document.getElementById('resultInfo');
+        const styleSelect = document.getElementById('style');
+        const resolutionSelect = document.getElementById('resolution');
+        const qualitySelect = document.getElementById('quality');
+        
+        document.querySelectorAll('.example-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                promptInput.value = btn.dataset.prompt;
+            });
+        });
+        
+        document.getElementById('backBtn').addEventListener('click', () => {
+            resultDiv.style.display = 'none';
+            generateBtn.disabled = false;
+            tg.MainButton.hide();
+        });
+        
+        generateBtn.addEventListener('click', async () => {
+            let prompt = promptInput.value.trim();
+            if (!prompt) {
+                tg.showAlert('Пожалуйста, введите описание изображения');
+                return;
+            }
+            
+            const style = styleSelect.value;
+            const fullPrompt = `${prompt}, ${style} style, high quality, detailed`;
+            
+            generateBtn.disabled = true;
+            loadingDiv.style.display = 'block';
+            
+            try {
+                const response = await fetch('/generate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        prompt: fullPrompt,
+                        settings: {
+                            resolution: parseInt(resolutionSelect.value),
+                            steps: parseInt(qualitySelect.value)
+                        },
+                        user_id: tg.initDataUnsafe?.user?.id
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    loadingDiv.style.display = 'none';
+                    resultImage.src = data.image_url;
+                    resultInfo.textContent = `✅ Готово за ${data.time} секунд`;
+                    resultDiv.style.display = 'block';
+                    
+                    tg.showPopup({
+                        title: 'Готово!',
+                        message: 'Изображение успешно создано',
+                        buttons: [{type: 'ok'}]
+                    });
+                } else {
+                    throw new Error(data.error);
+                }
+            } catch (error) {
+                loadingDiv.style.display = 'none';
+                generateBtn.disabled = false;
+                tg.showAlert(`Ошибка: ${error.message}`);
+            }
+        });
+        
+        tg.MainButton.setText("Закрыть");
+        tg.MainButton.onClick(() => {
+            tg.close();
+        });
+    </script>
+</body>
+</html>
