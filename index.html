@@ -117,9 +117,9 @@
             <h1>🎨 AI Image Generator</h1>
             <p>Создавайте изображения с помощью нейросети</p>
         </div>
-        
+
         <textarea id="prompt" class="prompt-input" rows="3" placeholder="Опишите изображение на АНГЛИЙСКОМ...&#10;&#10;Example: a cute dog in a park, realistic style, high quality"></textarea>
-        
+
         <div class="examples">
             <button class="example-btn" data-prompt="a cute dog playing in a sunny park, realistic">🐕 Собака</button>
             <button class="example-btn" data-prompt="a cat in space wearing a spacesuit, stars background">🐱 Кот в космосе</button>
@@ -128,7 +128,7 @@
             <button class="example-btn" data-prompt="fantasy castle on a mountain, clouds, magical">🏰 Замок</button>
             <button class="example-btn" data-prompt="anime girl with cherry blossoms, beautiful background">🎨 Аниме</button>
         </div>
-        
+
         <div class="settings">
             <div class="setting-row">
                 <label>🎨 Стиль</label>
@@ -148,33 +148,33 @@
                 </select>
             </div>
         </div>
-        
+
         <button id="generateBtn" class="generate-btn">🚀 Сгенерировать</button>
-        
+
         <div id="loading" class="loading">
             <div class="spinner"></div>
             <p>Генерация изображения...</p>
             <p style="font-size: 12px;">Обычно это занимает 20-30 секунд</p>
         </div>
-        
+
         <div id="result" class="result">
             <img id="resultImage" alt="Generated image">
             <div id="resultInfo" class="result-info"></div>
         </div>
-        
+
         <div class="info-text">
             💡 Совет: Чем подробнее описание, тем лучше результат!<br>
             📝 Используйте английский язык для лучшего качества
         </div>
     </div>
-    
+
     <script>
         const tg = window.Telegram.WebApp;
         tg.ready();
         tg.expand();
-        
+
         const API_URL = 'https://mashed-reforest-boxcar.ngrok-free.dev';
-        
+
         const promptInput = document.getElementById('prompt');
         const generateBtn = document.getElementById('generateBtn');
         const loadingDiv = document.getElementById('loading');
@@ -183,27 +183,27 @@
         const resultInfo = document.getElementById('resultInfo');
         const styleSelect = document.getElementById('style');
         const qualitySelect = document.getElementById('quality');
-        
+
         document.querySelectorAll('.example-btn').forEach(btn => {
             btn.addEventListener('click', () => {
                 promptInput.value = btn.dataset.prompt;
             });
         });
-        
+
         generateBtn.addEventListener('click', async () => {
             let prompt = promptInput.value.trim();
             if (!prompt) {
                 tg.showAlert('Пожалуйста, введите описание');
                 return;
             }
-            
+
             const style = styleSelect.value;
             const fullPrompt = `${prompt}, ${style} style, high quality, detailed`;
-            
+
             generateBtn.disabled = true;
             loadingDiv.style.display = 'block';
             resultDiv.style.display = 'none';
-            
+
             try {
                 const response = await fetch(API_URL + '/generate', {
                     method: 'POST',
@@ -213,9 +213,9 @@
                         user_id: tg.initDataUnsafe?.user?.id || 'anonymous'
                     })
                 });
-                
+
                 const data = await response.json();
-                
+
                 if (data.success) {
                     loadingDiv.style.display = 'none';
                     resultImage.src = 'data:image/png;base64,' + data.image;
