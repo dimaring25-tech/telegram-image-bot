@@ -1,61 +1,37 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html>
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI Image Generator</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            background: var(--tg-theme-bg-color, #ffffff);
-            color: var(--tg-theme-text-color, #000000);
+            font-family: system-ui;
+            max-width: 600px;
+            margin: 0 auto;
             padding: 20px;
-            min-height: 100vh;
+            background: var(--tg-theme-bg-color, #fff);
+            color: var(--tg-theme-text-color, #000);
         }
-        .container { max-width: 600px; margin: 0 auto; }
         .header {
-            text-align: center;
-            margin-bottom: 30px;
-            padding: 20px;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border-radius: 20px;
             color: white;
+            padding: 20px;
+            border-radius: 20px;
+            text-align: center;
+            margin-bottom: 20px;
         }
-        .header h1 { font-size: 28px; margin-bottom: 8px; }
-        .header p { opacity: 0.9; font-size: 14px; }
-        .prompt-input {
+        textarea {
             width: 100%;
             padding: 15px;
-            border: 2px solid var(--tg-theme-button-color, #667eea);
+            border: 2px solid #667eea;
             border-radius: 12px;
-            background: var(--tg-theme-secondary-bg-color, #f7f7f7);
-            color: var(--tg-theme-text-color, #000000);
             font-size: 16px;
-            resize: vertical;
             margin-bottom: 20px;
-            font-family: inherit;
+            box-sizing: border-box;
         }
-        .examples {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            margin-bottom: 20px;
-        }
-        .example-btn {
-            padding: 8px 16px;
-            background: var(--tg-theme-secondary-bg-color, #f0f0f0);
-            border: none;
-            border-radius: 20px;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        .example-btn:hover {
-            background: #667eea;
-            color: white;
-        }
-        .generate-btn {
+        button {
             width: 100%;
             padding: 16px;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -63,70 +39,61 @@
             border: none;
             border-radius: 12px;
             font-size: 16px;
-            font-weight: 600;
+            font-weight: bold;
             cursor: pointer;
-            margin-bottom: 20px;
         }
-        .generate-btn:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-        }
-        .result { display: none; margin-top: 20px; }
-        .result img { width: 100%; border-radius: 12px; margin-bottom: 10px; }
-        .loading { display: none; text-align: center; padding: 40px; }
+        button:disabled { opacity: 0.5; }
+        .loading { text-align: center; padding: 40px; display: none; }
         .spinner {
-            width: 50px;
-            height: 50px;
+            width: 40px;
+            height: 40px;
             border: 4px solid #f0f0f0;
             border-top-color: #667eea;
             border-radius: 50%;
             animation: spin 1s linear infinite;
-            margin: 0 auto 20px;
+            margin: 0 auto;
         }
         @keyframes spin { to { transform: rotate(360deg); } }
-        .error { display: none; background: #ff4444; color: white; padding: 15px; border-radius: 12px; margin-bottom: 20px; }
-        .api-url-status {
-            font-size: 12px;
-            color: #666;
-            text-align: center;
-            margin-bottom: 10px;
-            padding: 5px;
+        .result { margin-top: 20px; display: none; }
+        .result img { width: 100%; border-radius: 12px; }
+        .error { background: #ff4444; color: white; padding: 15px; border-radius: 12px; margin-bottom: 20px; display: none; }
+        .examples { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+        .example {
             background: var(--tg-theme-secondary-bg-color, #f0f0f0);
-            border-radius: 8px;
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 14px;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>🎨 AI Image Generator</h1>
-            <p>Создавайте изображения с помощью нейросети</p>
-        </div>
-        
-        <div id="apiStatus" class="api-url-status">🔌 Проверка подключения к серверу...</div>
-        <div id="errorMsg" class="error"></div>
-        
-        <textarea id="prompt" class="prompt-input" rows="3" placeholder="Опишите изображение на АНГЛИЙСКОМ...&#10;&#10;Example: a cute dog in a park, realistic style"></textarea>
-        
-        <div class="examples">
-            <button class="example-btn" data-prompt="a cute dog playing in a sunny park, realistic">🐕 Собака</button>
-            <button class="example-btn" data-prompt="a cat in space wearing a spacesuit, stars background">🐱 Кот в космосе</button>
-            <button class="example-btn" data-prompt="beautiful sunset over tropical beach, palm trees">🌅 Закат</button>
-            <button class="example-btn" data-prompt="cyberpunk city at night, neon lights">🌃 Киберпанк</button>
-        </div>
-        
-        <button id="generateBtn" class="generate-btn" disabled>🚀 Сгенерировать</button>
-        
-        <div id="loading" class="loading">
-            <div class="spinner"></div>
-            <p>Генерация изображения...</p>
-            <p style="font-size: 12px;">Обычно это занимает 20-30 секунд</p>
-        </div>
-        
-        <div id="result" class="result">
-            <img id="resultImage" alt="Generated image">
-            <div id="resultInfo" class="result-info"></div>
-        </div>
+    <div class="header">
+        <h1>🎨 AI Image Generator</h1>
+        <p>Создавайте изображения по тексту</p>
+    </div>
+    
+    <div class="examples">
+        <div class="example" data-prompt="a cute dog in a park, realistic">🐕 Собака</div>
+        <div class="example" data-prompt="a cat in space, stars background">🐱 Кот в космосе</div>
+        <div class="example" data-prompt="beautiful sunset over ocean">🌅 Закат</div>
+        <div class="example" data-prompt="cyberpunk city at night, neon lights">🌃 Киберпанк</div>
+    </div>
+    
+    <textarea id="prompt" rows="3" placeholder="Describe image in English...&#10;Example: a cute dog in a park"></textarea>
+    
+    <button id="generate">🚀 Generate Image</button>
+    
+    <div id="loading" class="loading">
+        <div class="spinner"></div>
+        <p>Generating... 20-30 seconds</p>
+    </div>
+    
+    <div id="error" class="error"></div>
+    
+    <div id="result" class="result">
+        <img id="image" alt="Generated">
+        <p id="info"></p>
     </div>
     
     <script>
@@ -134,124 +101,57 @@
         tg.ready();
         tg.expand();
         
-        // API URL - нужно заменить на ваш текущий ngrok URL!
-        // ПОЛУЧИТЕ ЭТОТ URL ИЗ COLAB (ячейка 5.5)
-        const API_URL = 'https://mashed-reforest-boxcar.ngrok-free.dev';
+        // ⚠️ ВСТАВЬТЕ ВАШ API URL ИЗ COLAB ⚠️
+        const API_URL = 'https://ваш-адрес.ngrok-free.dev';
         
-        const promptInput = document.getElementById('prompt');
-        const generateBtn = document.getElementById('generateBtn');
-        const loadingDiv = document.getElementById('loading');
-        const resultDiv = document.getElementById('result');
-        const resultImage = document.getElementById('resultImage');
-        const resultInfo = document.getElementById('resultInfo');
-        const apiStatus = document.getElementById('apiStatus');
-        const errorMsg = document.getElementById('errorMsg');
-        
-        // Проверка подключения к серверу
-        async function checkConnection() {
-            try {
-                console.log('Проверка подключения к:', API_URL);
-                const response = await fetch(API_URL + '/health', {
-                    method: 'GET',
-                    timeout: 5000
-                });
-                
-                if (response.ok) {
-                    const data = await response.json();
-                    apiStatus.innerHTML = `✅ Сервер подключен ({data.device || 'GPU'})`;
-                    apiStatus.style.background = '#4caf50';
-                    apiStatus.style.color = 'white';
-                    generateBtn.disabled = false;
-                } else {
-                    throw new Error('Сервер не отвечает');
-                }
-            } catch (error) {
-                console.error('Ошибка подключения:', error);
-                apiStatus.innerHTML = `❌ Нет подключения к серверу<br>⚠️ Бот перезапущен? Обновите API URL в HTML`;
-                apiStatus.style.background = '#ff4444';
-                apiStatus.style.color = 'white';
-                generateBtn.disabled = true;
-            }
-        }
-        
-        document.querySelectorAll('.example-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                promptInput.value = btn.dataset.prompt;
-            });
+        document.querySelectorAll('.example').forEach(el => {
+            el.onclick = () => {
+                document.getElementById('prompt').value = el.dataset.prompt;
+            };
         });
         
-        generateBtn.addEventListener('click', async () => {
-            const prompt = promptInput.value.trim();
+        document.getElementById('generate').onclick = async () => {
+            const prompt = document.getElementById('prompt').value.trim();
             if (!prompt) {
-                tg.showAlert('Пожалуйста, введите описание');
+                tg.showAlert('Enter prompt');
                 return;
             }
             
-            generateBtn.disabled = true;
-            loadingDiv.style.display = 'block';
+            const btn = document.getElementById('generate');
+            const loading = document.getElementById('loading');
+            const resultDiv = document.getElementById('result');
+            const errorDiv = document.getElementById('error');
+            
+            btn.disabled = true;
+            loading.style.display = 'block';
             resultDiv.style.display = 'none';
-            errorMsg.style.display = 'none';
+            errorDiv.style.display = 'none';
             
             try {
-                console.log('Отправка запроса:', prompt);
-                
-                const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 60000); // 60 секунд таймаут
-                
                 const response = await fetch(API_URL + '/generate', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        prompt: prompt,
-                        user_id: tg.initDataUnsafe?.user?.id || 'anonymous'
-                    }),
-                    signal: controller.signal
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({prompt: prompt})
                 });
-                
-                clearTimeout(timeoutId);
-                
-                if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-                }
                 
                 const data = await response.json();
                 
                 if (data.success) {
-                    loadingDiv.style.display = 'none';
-                    resultImage.src = 'data:image/png;base64,' + data.image;
-                    resultInfo.textContent = `✅ Готово за ${data.time} секунд`;
+                    loading.style.display = 'none';
+                    document.getElementById('image').src = 'data:image/png;base64,' + data.image;
+                    document.getElementById('info').innerText = '✅ Ready in ' + data.time + ' seconds';
                     resultDiv.style.display = 'block';
-                    tg.showPopup({
-                        title: 'Готово!',
-                        message: 'Изображение создано',
-                        buttons: [{type: 'ok'}]
-                    });
                 } else {
-                    throw new Error(data.error || 'Неизвестная ошибка');
+                    throw new Error(data.error);
                 }
-            } catch (error) {
-                loadingDiv.style.display = 'none';
-                console.error('Ошибка:', error);
-                
-                let errorText = error.message;
-                if (error.name === 'AbortError') {
-                    errorText = 'Сервер не отвечает слишком долго. Проверьте подключение.';
-                } else if (error.message.includes('Failed to fetch')) {
-                    errorText = 'Не удалось подключиться к серверу. Проверьте API URL в HTML файле.';
-                }
-                
-                errorMsg.innerHTML = `❌ Ошибка: ${errorText}`;
-                errorMsg.style.display = 'block';
-                tg.showAlert(`Ошибка: ${errorText}`);
+            } catch (err) {
+                loading.style.display = 'none';
+                errorDiv.innerText = '❌ Error: ' + err.message;
+                errorDiv.style.display = 'block';
             } finally {
-                generateBtn.disabled = false;
+                btn.disabled = false;
             }
-        });
-        
-        // Запускаем проверку подключения
-        checkConnection();
+        };
     </script>
 </body>
 </html>
