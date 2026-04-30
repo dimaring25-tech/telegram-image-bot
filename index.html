@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Image Generator</title>
+    <title>AI Image Generator - SD v1.4</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         body {
-            font-family: system-ui;
+            font-family: system-ui, -apple-system, sans-serif;
             max-width: 600px;
             margin: 0 auto;
             padding: 20px;
@@ -22,14 +22,30 @@
             text-align: center;
             margin-bottom: 20px;
         }
+        .examples {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin: 20px 0;
+        }
+        .example {
+            background: var(--tg-theme-secondary-bg-color, #f0f0f0);
+            padding: 10px;
+            border-radius: 10px;
+            text-align: center;
+            cursor: pointer;
+            font-size: 14px;
+        }
         textarea {
             width: 100%;
             padding: 15px;
             border: 2px solid #667eea;
             border-radius: 12px;
             font-size: 16px;
-            margin-bottom: 20px;
+            margin: 20px 0;
             box-sizing: border-box;
+            background: var(--tg-theme-bg-color, #fff);
+            color: var(--tg-theme-text-color, #000);
         }
         button {
             width: 100%;
@@ -43,7 +59,11 @@
             cursor: pointer;
         }
         button:disabled { opacity: 0.5; }
-        .loading { text-align: center; padding: 40px; display: none; }
+        .loading {
+            text-align: center;
+            padding: 40px;
+            display: none;
+        }
         .spinner {
             width: 40px;
             height: 40px;
@@ -56,13 +76,12 @@
         @keyframes spin { to { transform: rotate(360deg); } }
         .result { margin-top: 20px; display: none; }
         .result img { width: 100%; border-radius: 12px; }
-        .error { background: #ff4444; color: white; padding: 15px; border-radius: 12px; margin-bottom: 20px; display: none; }
-        .examples { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
-        .example {
-            background: var(--tg-theme-secondary-bg-color, #f0f0f0);
-            padding: 8px 16px;
-            border-radius: 20px;
-            cursor: pointer;
+        .error { background: #ff4444; color: white; padding: 15px; border-radius: 12px; display: none; margin-bottom: 20px; }
+        .status {
+            text-align: center;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 8px;
             font-size: 14px;
         }
     </style>
@@ -70,29 +89,31 @@
 <body>
     <div class="header">
         <h1>🎨 AI Image Generator</h1>
-        <p>Создавайте изображения по тексту</p>
+        <p>Stable Diffusion v1.4 • 5-15 секунд</p>
     </div>
+    
+    <div id="status" class="status">🔄 Проверка подключения...</div>
     
     <div class="examples">
-        <div class="example" data-prompt="a cute dog in a park, realistic">🐕 Собака</div>
-        <div class="example" data-prompt="a cat in space, stars background">🐱 Кот в космосе</div>
-        <div class="example" data-prompt="beautiful sunset over ocean">🌅 Закат</div>
-        <div class="example" data-prompt="cyberpunk city at night, neon lights">🌃 Киберпанк</div>
+        <div class="example" data-prompt="a cute cat wearing a hat, digital art, high quality">🐱 Милый кот</div>
+        <div class="example" data-prompt="beautiful sunset over mountains, 4k, realistic">🌅 Закат</div>
+        <div class="example" data-prompt="cyberpunk city at night, neon lights, detailed">🌃 Киберпанк</div>
+        <div class="example" data-prompt="magical forest with glowing mushrooms, fantasy art">🌲 Магический лес</div>
     </div>
     
-    <textarea id="prompt" rows="3" placeholder="Describe image in English...&#10;Example: a cute dog in a park"></textarea>
+    <textarea id="prompt" rows="3" placeholder="Describe in English...&#10;Example: a beautiful landscape with mountains and lake"></textarea>
     
-    <button id="generate">🚀 Generate Image</button>
+    <button id="generateBtn">🚀 Generate Image</button>
     
     <div id="loading" class="loading">
         <div class="spinner"></div>
-        <p>Generating... 20-30 seconds</p>
+        <p>⚡ Generating... This may take 5-15 seconds</p>
     </div>
     
     <div id="error" class="error"></div>
     
     <div id="result" class="result">
-        <img id="image" alt="Generated">
+        <img id="generatedImage" alt="Generated">
         <p id="info"></p>
     </div>
     
@@ -101,29 +122,51 @@
         tg.ready();
         tg.expand();
         
-        // ⚠️ ВСТАВЬТЕ ВАШ API URL ИЗ COLAB ⚠️
-        const API_URL = 'https://mashed-reforest-boxcar.ngrok-free.dev';
+        const API_URL = 'NgrokTunnel: "https://mashed-reforest-boxcar.ngrok-free.dev" -> "http://localhost:8000"';
+        const generateBtn = document.getElementById('generateBtn');
+        const promptInput = document.getElementById('prompt');
+        const statusDiv = document.getElementById('status');
+        const loadingDiv = document.getElementById('loading');
+        const resultDiv = document.getElementById('result');
+        const errorDiv = document.getElementById('error');
+        const generatedImage = document.getElementById('generatedImage');
+        const infoText = document.getElementById('info');
+        
+        async function checkConnection() {
+            try {
+                const response = await fetch(API_URL + '/health', { method: 'GET' });
+                if (response.ok) {
+                    const data = await response.json();
+                    statusDiv.innerHTML = '✅ Server connected! Model: ' + data.model_name;
+                    statusDiv.style.background = '#4caf50';
+                    statusDiv.style.color = 'white';
+                    generateBtn.disabled = false;
+                } else {
+                    throw new Error('Server error');
+                }
+            } catch (error) {
+                statusDiv.innerHTML = '❌ Cannot connect to server. Make sure Colab is running.';
+                statusDiv.style.background = '#ff4444';
+                statusDiv.style.color = 'white';
+                generateBtn.disabled = true;
+            }
+        }
         
         document.querySelectorAll('.example').forEach(el => {
             el.onclick = () => {
-                document.getElementById('prompt').value = el.dataset.prompt;
+                promptInput.value = el.dataset.prompt;
             };
         });
         
-        document.getElementById('generate').onclick = async () => {
-            const prompt = document.getElementById('prompt').value.trim();
+        generateBtn.onclick = async () => {
+            const prompt = promptInput.value.trim();
             if (!prompt) {
-                tg.showAlert('Enter prompt');
+                tg.showAlert('Please enter a prompt');
                 return;
             }
             
-            const btn = document.getElementById('generate');
-            const loading = document.getElementById('loading');
-            const resultDiv = document.getElementById('result');
-            const errorDiv = document.getElementById('error');
-            
-            btn.disabled = true;
-            loading.style.display = 'block';
+            generateBtn.disabled = true;
+            loadingDiv.style.display = 'block';
             resultDiv.style.display = 'none';
             errorDiv.style.display = 'none';
             
@@ -131,27 +174,29 @@
                 const response = await fetch(API_URL + '/generate', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({prompt: prompt})
+                    body: JSON.stringify({prompt: prompt, steps: 30})
                 });
                 
                 const data = await response.json();
                 
                 if (data.success) {
-                    loading.style.display = 'none';
-                    document.getElementById('image').src = 'data:image/png;base64,' + data.image;
-                    document.getElementById('info').innerText = '✅ Ready in ' + data.time + ' seconds';
+                    generatedImage.src = 'data:image/png;base64,' + data.image;
+                    infoText.innerHTML = '✅ Generated in ' + data.time + ' seconds<br>📝 ' + data.prompt;
                     resultDiv.style.display = 'block';
                 } else {
                     throw new Error(data.error);
                 }
             } catch (err) {
-                loading.style.display = 'none';
-                errorDiv.innerText = '❌ Error: ' + err.message;
+                errorDiv.innerHTML = '❌ ' + err.message;
                 errorDiv.style.display = 'block';
             } finally {
-                btn.disabled = false;
+                generateBtn.disabled = false;
+                loadingDiv.style.display = 'none';
             }
         };
+        
+        checkConnection();
+        setInterval(checkConnection, 30000);
     </script>
 </body>
 </html>
